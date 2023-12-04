@@ -1,89 +1,101 @@
+#include <Arduino.h>
 #include <SoftwareSerial.h>
+#include <TinyGPS++.h>
 
-SoftwareSerial gsmSerial(9, 10); //receive and transmit pins :: 9 => RX, 10 => TX
+SoftwareSerial gsmSerial(34, 35); // RX, TX for GSM
+SoftwareSerial gpsSerial(16, 17);   // RX, TX for GPS
+TinyGPSPlus gps;
 
-const char phoneNumber[] = "+21695593167"; 
-const char simPIN[] = "xxxx";  // Sim card pin if you need it
-
+const char phoneNumber[] = "+21695593167";
 
 void setup()
 {
-
-  gsmSerial.begin(9600); // Setting the baud rate of GSM Module
-  Serial.begin(9600); // Setting the baud rate of Serial Monitor
-  testSignal();
-  delay(100);
-  
+    Serial.begin(9600);
+    gsmSerial.begin(9600);
+    gpsSerial.begin(9600);
+    delay(3000);
+    testSignal();
+    delay(100);
 }
 
 void loop()
 {
+    // Check if GPS data is available
+    while (gpsSerial.available() > 0)
+    {
+        if (gps.encode(gpsSerial.read()))
+        {
+            displayInfo();
+            sendGPSData(phoneNumber, gps.location.lat(), gps.location.lng());
+        }
+    }
 
-char* gpsVal = "4807.0380"; // example
-SendMessage(phoneNumber, gpsVal);
-DialCall(phoneNumber);
-
-if (gsmSerial.available() > 0)
-  {
-    Serial.write(gsmSerial.read());
-  }
+    // Check if GSM data is available
+    while (gsmSerial.available() > 0)
+    {
+        Serial.write(gsmSerial.read());
+    }
 }
 
-/*
-AT commands:
-AT	              Checks if the module is responding.
-AT+CPIN?          Checks the status of the SIM card (PIN ready or not).
-AT+CSQ	          Checks the signal quality (measured in dBm).
-AT+CREG?	        Checks the registration status with the network.
-AT+CGATT?	        Checks if the device is attached to GPRS service.
-AT+CIPSTATUS	    Gets the connection status with the server.
-AT+CIPSTART	      Starts a TCP/UDP connection with the server.
-AT+CIPSEND	      Sends data to the server in TCP/UDP connection.
-AT+CIPCLOSE	      Closes the TCP/UDP connection with the server.
-AT+CMGF=1	        Sets SMS text mode, allowing sending/receiving SMS in text format.
-AT+CMGS=”number”	Initiates sending an SMS to the specified “number”.
-AT+CMGR=index	    Reads an SMS from the SMS memory with the specified “index”.
-*/
+
+
+
+void sendGPSData(const char *phoneNumber, float latitude, float longitude)
+{
+    char* message;
+    sprintf(message, "GPS Coordinates: %.6f, %.6f", latitude, longitude);
+
+    SendMessage(phoneNumber, message);
+    DialCall(phoneNumber);
+}
 
 void testSignal()
 {
-  gsmSerial.println("AT");
-   // Check signal strength
-  gsmSerial.println("AT+CSQ");
-
-  // Check if the module is registered on the network
-  gsmSerial.println("AT+CREG?");
-
-  // Check if the module is attached to the GPRS network
-  gsmSerial.println("AT+CGATT?");
-
-  // Check if the module is connected to the network
-  gsmSerial.println("AT+CGATT?");
+    gsmSerial.println("AT");
+    gsmSerial.println("AT+CSQ");
+    gsmSerial.println("AT+CREG?");
+    gsmSerial.println("AT+CGATT?");
+    gsmSerial.println("AT+CGATT?");
 }
 
-
-void SendMessage(const char* phoneNumber, char* message)
+void SendMessage(const char *phoneNumber, char *message)
 {
-    gsmSerial.println("AT+CMGF=1"); // Sets the GSM Module in Text Mode
-    delay(1000); // Delay of 1000 milliseconds or 1 second
+    gsmSerial.println("AT+CMGF=1");
+    delay(1000);
 
     gsmSerial.print("AT+CMGS=\"");
     gsmSerial.print(phoneNumber);
-    gsmSerial.println("\""); // Replace x with mobile number
-    delay(100);
-
-    gsmSerial.print("Coordonnées GPS de l'accident : "); // The SMS text you want to send
+    gsmSerial.println("\"");
     delay(100);
 
     gsmSerial.println(message);
+    gsmSerial.write(26); // Ctrl+Z to send the message
     delay(100);
 }
 
-void DialCall(const char* phoneNumber)
+void DialCall(const char *phoneNumber)
 {
     Serial.println("Calling...");
     gsmSerial.print("ATD");
     gsmSerial.print(phoneNumber);
-    gsmSerial.println(";"); // ATDxxxxxxxxxx; -- watch out here for semicolon at the end!!
+    gsmSerial.println(";");
     delay(100);
+}
+
+
+
+void displayInfo()
+{
+    Serial.print(F("Location: "));
+    if (gps.location.isValid())
+    {
+        Serial.print(gps.location.lat(), 6);
+        Serial.print(F(","));
+        Serial.print(gps.location.lng(), 6);
+    }
+    else
+    {
+        Serial.print(F("INVALID"));
+    }
+    Serial.println();
 }
