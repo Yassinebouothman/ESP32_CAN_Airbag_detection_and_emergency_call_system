@@ -1,5 +1,4 @@
 #include <TinyGPSPlus.h>
-#include <Arduino.h>
 #include <SoftwareSerial.h>
 
 
@@ -7,48 +6,73 @@ SoftwareSerial gsmSerial(34, 35); // RX, TX for GSM
 SoftwareSerial gpsSerial(16, 17);   // RX, TX for GPS
 TinyGPSPlus gps;
 
-const char phoneNumber[] = "+21695593167";
+// variables initializationn
+const char emergencyNumber[15] = "+21695593167";
+const char familyNumber[15] = "+21695593167";
+char emergencyMsg[50] = "";
+char latitude[15] = "";
+char longitude[15] = "";
 
 void setup()
 {
     Serial.begin(9600);
-    gsmSerial.begin(9600);
-    gpsSerial.begin(9600);
+    gsmSerial.begin(9600); // initialize gsm UART
+    gpsSerial.begin(9600); // initialize gps UART
+    while(!gsmSerial.available()) 
+    {
+      Serial.print("Connecting to gsm UART")
+      Serial.print(".");
+      delay(500);
+    }
+    Serial.println("GSM is connected successfully");
     delay(3000);
-    testSignal();
+    testSignal();  // testing gsm signal
     delay(100);
 }
 
 void loop()
 {
-    // Check if GPS data is available
-    while (gpsSerial.available() > 0)
-    {
-        if (gps.encode(gpsSerial.read()))
-        {
-            displayInfo();
-            sendGPSData(phoneNumber, gps.location.lat(), gps.location.lng());
-        }
-    }
 
-    // Check if GSM data is available
+      // Check if GSM data is available
     while (gsmSerial.available() > 0)
     {
         Serial.write(gsmSerial.read());
     }
+
+    // Check if GPS is available
+    while (gpsSerial.available() > 0)
+    {
+        if (gps.encode(gpsSerial.read()))
+        {
+          if (gps.location.isValid())
+          {
+            displayInfo(); // displaying lat and long
+            getEmergencyMsg(); // reading gps coordinates values and putting them in a clear message
+          }
+        }
+    }
+
+    dialCall(emergencyNumber); // dialing emergency
+    sendMessage(emergencyNumber, emergencyMsg); // sending emergency message to civil protection containing gps location
+    sendMessage(familyNumber, emergencyMsg); // sending emergency message to family containing gps location
 }
 
 
-
-
-void sendGPSData(const char *phoneNumber, float latitude, float longitude)
-{
-    char* message;
-    sprintf(message, "GPS Coordinates: %.6f, %.6f", latitude, longitude);
-
-    SendMessage(phoneNumber, message);
-    DialCall(phoneNumber);
-}
+/*
+AT commands :
+AT	                Checks if the module is responding.
+AT+CPIN?	        Checks the status of the SIM card (PIN ready or not).
+AT+CSQ	            Checks the signal quality (measured in dBm).
+AT+CREG?	        Checks the registration status with the network.
+AT+CGATT?	        Checks if the device is attached to GPRS service.
+AT+CIPSTATUS	    Gets the connection status with the server.
+AT+CIPSTART	        Starts a TCP/UDP connection with the server.
+AT+CIPSEND	        Sends data to the server in TCP/UDP connection.
+AT+CIPCLOSE	        Closes the TCP/UDP connection with the server.
+AT+CMGF=1	        Sets SMS text mode, allowing sending/receiving SMS in text format.
+AT+CMGS="number"	Initiates sending an SMS to the specified "number".
+AT+CMGR=index	    Reads an SMS from the SMS memory with the specified "index".
+*/
 
 void testSignal()
 {
@@ -59,7 +83,7 @@ void testSignal()
     gsmSerial.println("AT+CGATT?");
 }
 
-void SendMessage(const char *phoneNumber, char *message)
+void sendMessage(const char* phoneNumber, char* message)
 {
     gsmSerial.println("AT+CMGF=1");
     delay(1000);
@@ -74,7 +98,7 @@ void SendMessage(const char *phoneNumber, char *message)
     delay(100);
 }
 
-void DialCall(const char *phoneNumber)
+void dialCall(const char* phoneNumber)
 {
     Serial.println("Calling...");
     gsmSerial.print("ATD");
@@ -83,20 +107,19 @@ void DialCall(const char *phoneNumber)
     delay(100);
 }
 
-
+void getEmergencyMsg()
+{
+  sprintf(latitude, "%.6f", gps.location.lat());
+  sprintf(longitude, "%.6f", gps.location.lng());
+  sprintf(emergencyMsg, "Accident detected on the location: Latitude : %s° N, Longitude : %s° W", latitude, longitude);
+  Serial.print("Emergency Message is: ");
+  Serial.println(emergencyMsg);
+}
 
 void displayInfo()
 {
     Serial.print(F("Location: "));
-    if (gps.location.isValid())
-    {
-        Serial.print(gps.location.lat(), 6);
-        Serial.print(F(","));
-        Serial.print(gps.location.lng(), 6);
-    }
-    else
-    {
-        Serial.print(F("INVALID"));
-    }
-    Serial.println();
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps.location.lng(), 6);
 }
