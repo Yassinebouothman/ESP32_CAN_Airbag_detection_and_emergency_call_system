@@ -49,6 +49,11 @@ void loop()
             displayInfo(); // displaying lat and long
             getEmergencyMsg(); // reading gps coordinates values and putting them in a clear message
           }
+          else 
+          {
+            Serial.println("Invalid GPS Data");
+
+          }
         }
     }
 
