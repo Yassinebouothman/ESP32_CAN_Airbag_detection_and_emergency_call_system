@@ -20,7 +20,7 @@ void setup()
     gpsSerial.begin(9600); // initialize gps UART
     while(!gsmSerial.available()) 
     {
-      Serial.print("Connecting to gsm UART")
+      Serial.print("Connecting to gsm UART");
       Serial.print(".");
       delay(500);
     }
