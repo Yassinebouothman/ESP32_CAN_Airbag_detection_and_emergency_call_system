@@ -139,7 +139,8 @@ void displayInfo()
 
 void gsm_http_post(String postdata) {
   Serial.println(" --- Start GPRS & HTTP --- ");
-  String jsondata = "{\"message\":\""+ postdata + "\"}";
+  unsigned long timestamp = millis(); // You can use other methods to get a timestamp
+  String jsondata = "{\"timestamp\":" + String(timestamp) + ",\"message\":\"" + postdata + "\"}";
   ATcommand("AT+SAPBR=1,1");
   delay(5000);
   ATcommand("AT+SAPBR=2,1");

@@ -29,9 +29,10 @@ function displayMessages(messages) {
             listItem.textContent = 'No messages available.';
             messageList.appendChild(listItem);
         } else {
-            messages.forEach(message => {
+            messages.forEach(messageData => {
                 const listItem = document.createElement('li');
-                listItem.textContent = message;
+                const timestamp = new Date(parseInt(messageData.timestamp)).toLocaleString(); // Parse and Format timestamp
+                listItem.textContent = `${timestamp}: ${messageData.message}`;
                 messageList.appendChild(listItem);
             });
         }
