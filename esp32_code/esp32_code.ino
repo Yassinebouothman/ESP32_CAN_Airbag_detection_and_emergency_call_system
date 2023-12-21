@@ -59,7 +59,7 @@ void loop() {
   if (gprsAvailable) {
     gsm_http_post();
   }
-  else if (gprsAvailable) {
+  else if (gsmAvailable) {
     sendMessage(emergencyNumber, emergencyMessage);        // sending emergency message to civil protection containing gps location
     sendMessage(familyNumber, emergencyMessage);  // sending emergency message to family containing gps location
   }
