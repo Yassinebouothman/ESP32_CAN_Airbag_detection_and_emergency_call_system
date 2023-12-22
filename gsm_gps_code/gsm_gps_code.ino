@@ -119,7 +119,6 @@ void getRandomData() {
   int randomNum1 = rand() % 9000 + 1000;  // Produces a number between 1000 and 9999
   int randomNum2 = rand() % 9000 + 1000;  // Produces a number between 1000 and 9999
 
-  // Convert the integer to a string and store it in a char array
   char randomStr1[5];  // One extra character for the null terminator '\0'
   char randomStr2[5];  // One extra character for the null terminator '\0'
 

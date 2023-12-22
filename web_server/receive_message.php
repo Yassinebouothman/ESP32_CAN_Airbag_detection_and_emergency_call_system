@@ -13,17 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $latitude = $messageData['latitude'];
         $longitude = $messageData['longitude'];
         $timestamp = time();
-        // Simulate storing the message in a database or file
     
-        // Replace this with your actual logic to handle the incoming message
         $messagesFile = 'messages.json';
         $existingMessages = json_decode(file_get_contents($messagesFile), true) ?? [];
         $existingMessages[] = ['latitude' => $latitude,'longitude' => $longitude,'timestamp' => $timestamp];
 
-        // Save the updated messages to the file
+        // Save the updated messages to messages.json file
         file_put_contents($messagesFile, json_encode($existingMessages));
 
-        // Send a response (optional)
+        // Send a response
         header('Content-Type: application/json');
         echo json_encode(['status' => 'success']);
     } else {

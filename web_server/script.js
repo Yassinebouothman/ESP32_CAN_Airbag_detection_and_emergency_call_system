@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Fetch messages from the server
+    // Fetch messages
     fetchMessages();
 
-    // Fetch messages every 5 seconds (adjust as needed)
+    // Fetch messages every 5 seconds
     setInterval(fetchMessages, 5000);
 });
 
@@ -11,7 +11,7 @@ function fetchMessages() {
     fetch('messages.json')
         .then(response => response.json())
         .then(messages => {
-            // Update the HTML to display messages
+            // Update the HTML
             displayMessages(messages);
             addMarker(messages);
         })
@@ -22,7 +22,7 @@ function fetchMessages() {
 
 function displayMessages(messages) {
     const messageList = document.getElementById('messageList');
-    messageList.innerHTML = ''; // Clear previous messages
+    messageList.innerHTML = '';
 
     if (Array.isArray(messages)) {
         if (messages.length === 0) {
@@ -44,8 +44,7 @@ function displayMessages(messages) {
 
 let marker, circle, zoom;
 function addMarker(messages) {
-    // const latitude = parseFloat(messageData.latitude);
-    // const longitude = parseFloat(messageData.longitude);
+
     const coordinates = messages
         .filter(messageData => !isNaN(parseFloat(messageData.latitude)) && !isNaN(parseFloat(messageData.longitude)))
         .map(messageData => [parseFloat(messageData.latitude), parseFloat(messageData.longitude)]);
@@ -59,8 +58,7 @@ function addMarker(messages) {
     // Add markers to the map based on JSON data
 
     coordinates.forEach(coordinate => {
-        // Convert coordinate to a string for use as a dictionary key    
-        if (!isMarkerAlreadyAdded(coordinate)) {
+        if (!markerAlreadyAdded(coordinate)) {
             // Add a new marker and circle
             const marker = L.marker(coordinate).addTo(map);
             const circle = L.circle(coordinate, {
@@ -72,12 +70,10 @@ function addMarker(messages) {
     
             marker.on('click', function () {
                 // Open the popup    
-                // Zoom the map to the marker's location
                 marker.bindPopup(`<b>Accident detected!</b><br>Coordinates: ${coordinate}`).openPopup();
-                map.fitBounds(circle.getBounds()); // Adjust the zoom level as needed
+                map.fitBounds(circle.getBounds());
             });
     
-            // Mark the coordinate as having an existing marker
         }
     });
     // if (!zoom){
@@ -85,7 +81,7 @@ function addMarker(messages) {
     // }
 }
 
-function isMarkerAlreadyAdded(coordinate) {
+function markerAlreadyAdded(coordinate) {
     let markerAlreadyAdded = false;
 
     // Iterate through all layers on the map
